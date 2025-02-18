@@ -1,6 +1,7 @@
 import pytest
 from sar_project.agents.weather_agent import WeatherAgent
 
+
 class TestWeatherAgent:
     @pytest.fixture
     def agent(self):
@@ -12,10 +13,7 @@ class TestWeatherAgent:
         assert agent.mission_status == "standby"
 
     def test_process_request(self, agent):
-        message = {
-            "get_conditions": True,
-            "location": "test_location"
-        }
+        message = {"get_conditions": True, "location": "test_location"}
         response = agent.process_request(message)
         assert "temperature" in response
         assert "wind_speed" in response

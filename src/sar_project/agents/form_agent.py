@@ -1,14 +1,13 @@
 import os
-from typing import Any
 from pypdf import PdfReader, PdfWriter
 import google.generativeai as genai
 import dotenv
 import editdistance
 
+from sar_project.agents.base_agent import SARBaseAgent
+
 dotenv.load_dotenv()
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-
-from sar_project.agents.base_agent import SARBaseAgent
 
 
 class FormManager(SARBaseAgent):
@@ -23,7 +22,9 @@ class FormManager(SARBaseAgent):
         )
         self.model = genai.GenerativeModel("gemini-2.0-flash")
 
-    def process_request(self, message: dict[str, PdfReader | str]) -> PdfWriter:
+    def process_request(
+        self, message: dict[str, PdfReader | str]
+    ) -> PdfWriter | dict[str, str]:
         """Process weather-related requests"""
         try:
             if "form" not in message or not isinstance(message["form"], PdfReader):
@@ -54,20 +55,24 @@ example field: example content
             e[0]: e[1] if len(e) > 1 else ""
             for e in (line.split(":", 2) for line in text.splitlines())
         }
-        filled_fields = {self.autocorrect_field(f, list(fields.keys())): v for f, v in filled_fields.items()}
+        filled_fields = {
+            self.autocorrect_field(f, list(fields.keys())): v
+            for f, v in filled_fields.items()
+        }
         for page in writer.pages:
             writer.update_page_form_field_values(
                 page, filled_fields, auto_regenerate=False
             )
         return writer
 
-    def autocorrect_field(self, field: str, candidates: list[str], threshold: int = 10) -> str:
+    def autocorrect_field(
+        self, field: str, candidates: list[str], threshold: int = 10
+    ) -> str:
         candidates = sorted(candidates, key=lambda c: editdistance.eval(c, field))
         if editdistance.eval(candidates[0], field) < threshold:
             return candidates[0]
         else:
             return field
-
 
     def update_status(self, status):
         """Update the agent's status"""

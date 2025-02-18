@@ -1,4 +1,6 @@
 from sar_project.agents.base_agent import SARBaseAgent
+
+
 class WeatherAgent(SARBaseAgent):
     def __init__(self, name="weather_specialist"):
         super().__init__(
@@ -8,11 +10,11 @@ class WeatherAgent(SARBaseAgent):
             1. Analyze weather conditions
             2. Predict weather impacts on operations
             3. Provide safety recommendations
-            4. Monitor changing conditions"""
+            4. Monitor changing conditions""",
         )
         self.current_conditions = {}
         self.forecasts = {}
-        
+
     def process_request(self, message):
         """Process weather-related requests"""
         try:
@@ -20,7 +22,9 @@ class WeatherAgent(SARBaseAgent):
             if "get_conditions" in message:
                 return self.get_current_conditions(message["location"])
             elif "get_forecast" in message:
-                return self.get_weather_forecast(message["location"], message["duration"])
+                return self.get_weather_forecast(
+                    message["location"], message["duration"]
+                )
             elif "assess_risk" in message:
                 return self.assess_weather_risk(message["location"])
             else:
@@ -36,7 +40,7 @@ class WeatherAgent(SARBaseAgent):
             "temperature": 22,
             "wind_speed": 15,
             "precipitation": 0,
-            "visibility": 10
+            "visibility": 10,
         }
 
     def get_weather_forecast(self, location, duration):
@@ -47,8 +51,8 @@ class WeatherAgent(SARBaseAgent):
             "duration": duration,
             "forecast": [
                 {"time": "now+1h", "conditions": "clear"},
-                {"time": "now+2h", "conditions": "partly_cloudy"}
-            ]
+                {"time": "now+2h", "conditions": "partly_cloudy"},
+            ],
         }
 
     def assess_weather_risk(self, location):
@@ -63,7 +67,7 @@ class WeatherAgent(SARBaseAgent):
         return {
             "risk_level": len(risks),
             "risks": risks,
-            "recommendations": self._generate_recommendations(risks)
+            "recommendations": self._generate_recommendations(risks),
         }
 
     def _generate_recommendations(self, risks):
