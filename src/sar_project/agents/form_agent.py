@@ -35,7 +35,7 @@ class FormManager(SARBaseAgent):
         except Exception as e:
             return {"error": str(e)}
 
-    def fill_form(self, reader: PdfReader, content_prompt: str) -> PdfWriter:
+    def fill_form(self, reader: PdfReader, content_prompt: str) -> dict[str, PdfWriter | str]:
         writer = PdfWriter()
         writer.append(reader)
         text = "\n".join(page.extract_text() for page in reader.pages)
@@ -46,14 +46,16 @@ class FormManager(SARBaseAgent):
 And this prompt for how the form should be filled:
 {content_prompt}
 
-Give form context appropriate content for each of following fields with each field on a separate line separated by a colon
+Give form context appropriate content for each of following fields with each field on a separate line separated by a colon. Do not fill in any information that isn't in the content prompt or reasonably inferred from it. After writing the content, write <END> and then summarize what was written.
 example field: example content
 \"{", ".join(fields)}\":
 """
         text = self.model.generate_content(prompt).text
+        # FIXME: could put more validation and retry logic here but that's kind of an infinite time sink
+        filled_fields_raw, summary = text.split("<END>", 2)
         filled_fields = {
             e[0]: e[1] if len(e) > 1 else ""
-            for e in (line.split(":", 2) for line in text.splitlines())
+            for e in (line.split(":", 2) for line in filled_fields_raw.splitlines())
         }
         filled_fields = {
             self.autocorrect_field(f, list(fields.keys())): v
@@ -63,7 +65,10 @@ example field: example content
             writer.update_page_form_field_values(
                 page, filled_fields, auto_regenerate=False
             )
-        return writer
+        return {
+            "form": writer,
+            "summary": summary,
+        }
 
     def autocorrect_field(
         self, field: str, candidates: list[str], threshold: int = 10
